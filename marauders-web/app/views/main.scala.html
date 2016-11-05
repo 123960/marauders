@@ -1,0 +1,71 @@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>@title</title>
+        <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
+        <script src="@routes.Assets.versioned("javascripts/prefixfree.min.js")"></script>
+        <script type="text/javascript">
+
+          function loadEvents() {
+
+            if (!!window.EventSource) {
+              var source = new EventSource("@routes.Application.incidentsByClientPerDay()");
+              var incs   = []
+              source.addEventListener('message', function(e) {
+                var json = e.data;
+                var inc  = JSON.parse(json);
+                var incKey = inc.date + "-" + inc.account + "-" + inc.error
+
+                if (incs.indexOf(incKey) == -1) {                  
+                  incs.push(incKey)
+                  var tr = document.createElement('tr');
+                  var tdDate    = document.createElement('td');
+                  var tdAccount = document.createElement('td');
+                  var tdError   = document.createElement('td');
+                  var tdCount   = document.createElement('td');
+                  tdDate.appendChild(document.createTextNode(inc.date))
+                  tdAccount.appendChild(document.createTextNode(inc.account))
+                  tdError.appendChild(document.createTextNode(inc.error))
+                  tdCount.appendChild(document.createTextNode(inc.count))
+
+                  tdDate.setAttribute('id', 'elem-date-' + incKey)
+                  tdAccount.setAttribute('id', 'elem-account-' + incKey)
+                  tdError.setAttribute('id', 'elem-error-' + incKey)
+                  tdCount.setAttribute('id', 'elem-count-' + incKey)
+
+                  tr.appendChild(tdDate)
+                  tr.appendChild(tdAccount)
+                  tr.appendChild(tdError)
+                  tr.appendChild(tdCount)
+
+                  document.getElementById("incidents-by-client-per-day").appendChild(tr);
+                } else {
+                  document.getElementById('elem-count-' + incKey).innerText = inc.count;
+                }
+
+              });
+            } else {
+              $("#summary").html("Sorry. This browser doesn't seem to support Server sent event. Check <a href='http://html5test.com/compare/feature/communication-eventSource.html'>html5test</a> for browser compatibility.");
+            }
+          }
+
+          window.onload = loadEvents;
+        </script>
+    </head>
+    <body>
+
+      <table id="incidents-by-client-per-day">
+        <tr>
+          <th>Date</th>
+          <th>Account</th> 
+          <th>Error</th>
+          <th>Count</th>
+        </tr>
+
+      </table>
+
+    </body>
+</html>
